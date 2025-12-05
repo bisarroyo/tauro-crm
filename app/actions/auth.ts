@@ -2,43 +2,124 @@
 
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
-
 import { auth } from '@/lib/auth'
+import { z } from 'zod'
 
-export async function signUpAction(formData: FormData) {
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const name = formData.get('name') as string
+import { APIError } from 'better-auth'
 
-    await auth.api.signUpEmail({
-        body: {
-            email,
-            password,
-            name
-        }
+const signupSchema = z.object({
+    name: z.string().min(3, 'El nombre debe tener al menos 3 caracteres'),
+    email: z.string().email('Ingresa un correo válido'),
+    password: z
+        .string()
+        .min(8, 'La contraseña debe tener al menos 8 caracteres')
+})
+
+export async function signUpAction(prevState: unknown, formData: FormData) {
+    const validateFields = signupSchema.safeParse({
+        name: formData.get('name'),
+        email: formData.get('email'),
+        password: formData.get('password')
     })
+    if (!validateFields.success) {
+        return {
+            success: false,
+            error: 'Datos inválidos'
+        }
+    }
+    const { name, email, password } = validateFields.data
+    try {
+        await auth.api.signUpEmail({
+            body: {
+                email,
+                password,
+                name
+            },
+            headers: await headers()
+        })
+        redirect('/')
+    } catch (err) {
+        console.error('Better Auth error:', err)
 
-    redirect('/')
+        // 🔥 ERRORES CONTROLADOS DE BETTER AUTH
+        if (err instanceof APIError) {
+            const message =
+                err.body?.message === 'User already exists. Use another email.'
+                    ? 'Este correo ya está registrado. Intenta iniciar sesión.'
+                    : err.body?.message ?? 'Error inesperado.'
+
+            return {
+                success: false,
+                error: message
+            }
+        }
+
+        // 🔥 Cualquier otro error
+        return {
+            success: false,
+            error: 'Error inesperado. Intenta de nuevo.'
+        }
+    }
 }
 
-export async function signInAction(formData: FormData) {
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
+const signInSchema = z.object({
+    email: z.string().email('Ingresa un correo válido'),
+    password: z.string().min(8, 'Ingresa tu contraseña')
+})
 
-    await auth.api.signInEmail({
-        body: {
-            email,
-            password
-        }
+export async function signInAction(prevState: unknown, formData: FormData) {
+    const validateFields = signInSchema.safeParse({
+        email: formData.get('email'),
+        password: formData.get('password')
     })
+    if (!validateFields.success) {
+        return {
+            success: false,
+            error: 'Datos inválidos'
+        }
+    }
+    const { email, password } = validateFields.data
+    try {
+        await auth.api.signInEmail({
+            body: {
+                email,
+                password
+            },
+            headers: await headers()
+        })
+        redirect('/')
+    } catch (err) {
+        console.error('Better Auth error:', err)
 
-    redirect('/')
+        // 🔥 ERRORES CONTROLADOS DE BETTER AUTH
+        if (err instanceof APIError) {
+            const message =
+                err.body?.message === 'Invalid email or password'
+                    ? 'Correo o contraseña incorrectos'
+                    : err.body?.message ?? 'Error inesperado.'
+
+            return {
+                success: false,
+                error: message
+            }
+        }
+
+        // 🔥 Cualquier otro error
+        return {
+            success: false,
+            error: 'Error inesperado. Intenta de nuevo.'
+        }
+    }
 }
 
 export async function signOutAction() {
-    await auth.api.signOut({
-        headers: await headers()
-    })
-
-    redirect('/')
+    try {
+        await auth.api.signOut({
+            headers: await headers()
+        })
+        redirect('/')
+    } catch (error) {
+        console.log(error)
+        return { error: 'Error al cerrar sesión' }
+    }
 }

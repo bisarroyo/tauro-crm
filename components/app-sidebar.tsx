@@ -5,12 +5,12 @@ import {
     BookOpen,
     Bot,
     Command,
-    Frame,
     GalleryVerticalEnd,
     Map,
+    MessageSquareText,
     PieChart,
     Settings2,
-    SquareTerminal
+    UsersRound
 } from 'lucide-react'
 import { NavMain } from '@/components/nav-main'
 import { NavProjects } from '@/components/nav-projects'
@@ -46,51 +46,47 @@ const data = {
     ],
     navMain: [
         {
-            title: 'Playground',
+            title: 'Clientes',
             url: '#',
-            icon: SquareTerminal,
+            icon: UsersRound,
             isActive: true,
             items: [
                 {
-                    title: 'History',
-                    url: '#'
+                    title: 'Listar clientes',
+                    url: '/clientes'
                 },
                 {
-                    title: 'Starred',
-                    url: '#'
+                    title: 'Cargar clientes',
+                    url: '/clients/import'
                 },
                 {
-                    title: 'Settings',
-                    url: '#'
+                    title: 'Ajustes',
+                    url: '/clients/settings'
                 }
             ]
         },
         {
-            title: 'Models',
+            title: 'Chats',
             url: '#',
             icon: Bot,
             items: [
                 {
-                    title: 'Genesis',
-                    url: '#'
+                    title: 'Chats',
+                    url: 'dashboard/chats'
                 },
                 {
-                    title: 'Explorer',
-                    url: '#'
-                },
-                {
-                    title: 'Quantum',
-                    url: '#'
+                    title: 'Crear chat AI',
+                    url: 'dashboard/chats/new'
                 }
             ]
         },
         {
-            title: 'Documentation',
+            title: 'Documentación',
             url: '#',
             icon: BookOpen,
             items: [
                 {
-                    title: 'Introduction',
+                    title: 'Introducción',
                     url: '#'
                 },
                 {
@@ -131,11 +127,11 @@ const data = {
             ]
         }
     ],
-    projects: [
+    chats: [
         {
-            name: 'Design Engineering',
-            url: '#',
-            icon: Frame
+            name: 'Conversaciones',
+            url: '/chats',
+            icon: MessageSquareText
         },
         {
             name: 'Sales & Marketing',
@@ -159,7 +155,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={data.navMain} />
-                <NavProjects projects={data.projects} />
+                <NavProjects projects={data.chats} />
             </SidebarContent>
             <SidebarFooter>
                 <NavUser user={session} />

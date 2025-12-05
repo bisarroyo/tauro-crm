@@ -15,7 +15,11 @@ export const user = sqliteTable('user', {
     updatedAt: integer('updated_at', { mode: 'timestamp_ms' })
         .default(sql`(cast(unixepoch('subsecond') * 1000 as integer))`)
         .$onUpdate(() => /* @__PURE__ */ new Date())
-        .notNull()
+        .notNull(),
+    role: text('role'),
+    banned: integer('banned', { mode: 'boolean' }).default(false),
+    banReason: text('ban_reason'),
+    banExpires: integer('ban_expires', { mode: 'timestamp_ms' })
 })
 
 export const session = sqliteTable(
@@ -35,7 +39,8 @@ export const session = sqliteTable(
         userId: text('user_id')
             .notNull()
             .references(() => user.id, { onDelete: 'cascade' }),
-        activeOrganizationId: text('active_organization_id')
+        activeOrganizationId: text('active_organization_id'),
+        impersonatedBy: text('impersonated_by')
     },
     (table) => [index('session_userId_idx').on(table.userId)]
 )
@@ -187,12 +192,3 @@ export const invitationRelations = relations(invitation, ({ one }) => ({
         references: [user.id]
     })
 }))
-
-export type Schema = {
-    User: typeof user.$inferInsert
-    Session: typeof session.$inferInsert
-    Account: typeof account.$inferInsert
-    Organization: typeof organization.$inferInsert
-    Member: typeof member.$inferInsert
-    Invitation: typeof invitation.$inferInsert
-}

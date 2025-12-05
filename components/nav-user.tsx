@@ -55,7 +55,7 @@ export function NavUser({ user }: { user: Session | null }) {
                                     alt={user?.name}
                                 />
                                 <AvatarFallback className='rounded-lg'>
-                                    CN
+                                    {user?.name?.slice(0, 2).toUpperCase()}
                                 </AvatarFallback>
                             </Avatar>
                             <div className='grid flex-1 text-left text-sm leading-tight'>
@@ -82,7 +82,7 @@ export function NavUser({ user }: { user: Session | null }) {
                                         alt={user?.name}
                                     />
                                     <AvatarFallback className='rounded-lg'>
-                                        CN
+                                        {user?.name?.slice(0, 2).toUpperCase()}
                                     </AvatarFallback>
                                 </Avatar>
                                 <div className='grid flex-1 text-left text-sm leading-tight'>
