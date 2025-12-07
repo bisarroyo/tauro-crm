@@ -1,7 +1,7 @@
 'use client'
 
 import { authClient } from '@/lib/auth-client'
-import { signUpAction } from '../../actions/auth'
+import { signUpAction } from '@/app/actions/auth'
 import { useActionState } from 'react'
 import { useState } from 'react'
 

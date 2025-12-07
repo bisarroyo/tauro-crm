@@ -1,6 +1,10 @@
-import Schema from '@/auth-schema'
+import AuthSchema from '@/auth-schema'
+import ContactSchema from '@/db/schema'
 
 declare global {
-    type Session = typeof Schema.Session.$inferSelect
-    type User = typeof Schema.User.$inferSelect
+    type Session = typeof AuthSchema.Session.$inferSelect
+    type User = typeof AuthSchema.User.$inferSelect
+
+    // Contact type
+    type ContactType = typeof ContactSchema.$inferSelect
 }

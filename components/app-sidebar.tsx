@@ -46,22 +46,22 @@ const data = {
     ],
     navMain: [
         {
-            title: 'Clientes',
+            title: 'Leads',
             url: '#',
             icon: UsersRound,
             isActive: true,
             items: [
                 {
-                    title: 'Listar clientes',
-                    url: '/clientes'
+                    title: 'Leads',
+                    url: '/contacts'
                 },
                 {
-                    title: 'Cargar clientes',
+                    title: 'Cargar Leads',
                     url: '/clients/import'
                 },
                 {
-                    title: 'Ajustes',
-                    url: '/clients/settings'
+                    title: 'Crear lead',
+                    url: '/contacts/create'
                 }
             ]
         },

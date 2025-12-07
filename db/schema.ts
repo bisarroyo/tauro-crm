@@ -1,25 +1,18 @@
 import { sql } from 'drizzle-orm'
 import { sqliteTable, integer, text } from 'drizzle-orm/sqlite-core'
-
-export const users = sqliteTable('users', {
-    id: text('id').primaryKey(), // UUID (from better-auth user id)
-    name: text('name').notNull(),
-    email: text('email').notNull().unique(),
-    role: text('role').notNull().default('user'), // 'user' | 'admin'
-    createdAt: integer('created_at', { mode: 'timestamp' }).default(
-        sql`(unixepoch())`
-    )
-})
+import { user } from '@/auth-schema'
 
 export const contacts = sqliteTable('contacts', {
     id: integer('id').primaryKey({ autoIncrement: true }),
     firstName: text('first_name').notNull(),
     lastName: text('last_name'),
-    phone: text('phone'),
-    email: text('email'),
-    status: text('status').default('new'), // new, contacted, qualified, lost, customer
+    phone: text('phone').notNull(),
+    countryCode: text('country_code').notNull(),
+    email: text('email').notNull(),
+    status: text('status').default('new'),
+    priority: integer('priority').default(1),
     assignedTo: text('assigned_to')
-        .references(() => users.id)
+        .references(() => user.id)
         .notNull(),
     notes: text('notes'),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(
@@ -34,7 +27,7 @@ export const messages = sqliteTable('messages', {
     id: integer('id').primaryKey({ autoIncrement: true }),
     contactId: integer('contact_id').references(() => contacts.id),
     userId: text('user_id')
-        .references(() => users.id)
+        .references(() => user.id)
         .notNull(), // who sent (null if from contact)
     fromMe: integer('from_me', { mode: 'boolean' }).notNull(),
     body: text('body').notNull(),
@@ -50,7 +43,7 @@ export const tasks = sqliteTable('tasks', {
     dueAt: integer('due_at', { mode: 'timestamp' }).notNull(),
     status: text('status').default('pending'), // pending, done, canceled
     assignedTo: text('assigned_to')
-        .references(() => users.id)
+        .references(() => user.id)
         .notNull(),
     createdAt: integer('created_at', { mode: 'timestamp' }).default(
         sql`(unixepoch())`

@@ -24,7 +24,7 @@ export default function LayoutSidebar({
                         </div>
                     </Header>
                 </div>
-                <main className='min-h-screen w-full p-4'>{children}</main>
+                <main className='min-h-screen w-full md:p-4'>{children}</main>
             </SidebarInset>
         </SidebarProvider>
     )

@@ -5,8 +5,7 @@ import {
     Bell,
     ChevronsUpDown,
     CreditCard,
-    LogOut,
-    Sparkles
+    LogOut
 } from 'lucide-react'
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -28,6 +27,7 @@ import {
 
 // import Link from 'next/link'
 import { authClient } from '@/lib/auth-client'
+import Link from 'next/link'
 
 export function NavUser({ user }: { user: Session | null }) {
     const { isMobile } = useSidebar()
@@ -96,18 +96,14 @@ export function NavUser({ user }: { user: Session | null }) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
-                            <DropdownMenuItem>
-                                <Sparkles />
-                                Upgrade to Pro
-                            </DropdownMenuItem>
-                        </DropdownMenuGroup>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuGroup>
+                        <Link href='/account'>
                             <DropdownMenuItem>
                                 <BadgeCheck />
                                 Account
                             </DropdownMenuItem>
+                        </Link>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuGroup>
                             <DropdownMenuItem>
                                 <CreditCard />
                                 Billing

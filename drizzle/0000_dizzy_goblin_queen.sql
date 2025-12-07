@@ -1,3 +1,42 @@
+CREATE TABLE `contacts` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`first_name` text NOT NULL,
+	`last_name` text,
+	`phone` text NOT NULL,
+	`country_code` text NOT NULL,
+	`email` text NOT NULL,
+	`status` text DEFAULT 'new',
+	`priority` integer DEFAULT 1,
+	`assigned_to` text NOT NULL,
+	`notes` text,
+	`created_at` integer DEFAULT (unixepoch()),
+	`updated_at` integer DEFAULT (unixepoch()),
+	FOREIGN KEY (`assigned_to`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `messages` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`contact_id` integer,
+	`user_id` text NOT NULL,
+	`from_me` integer NOT NULL,
+	`body` text NOT NULL,
+	`created_at` integer DEFAULT (unixepoch()),
+	FOREIGN KEY (`contact_id`) REFERENCES `contacts`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
+CREATE TABLE `tasks` (
+	`id` integer PRIMARY KEY AUTOINCREMENT NOT NULL,
+	`contact_id` integer,
+	`title` text NOT NULL,
+	`due_at` integer NOT NULL,
+	`status` text DEFAULT 'pending',
+	`assigned_to` text NOT NULL,
+	`created_at` integer DEFAULT (unixepoch()),
+	FOREIGN KEY (`contact_id`) REFERENCES `contacts`(`id`) ON UPDATE no action ON DELETE no action,
+	FOREIGN KEY (`assigned_to`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE no action
+);
+--> statement-breakpoint
 CREATE TABLE `account` (
 	`id` text PRIMARY KEY NOT NULL,
 	`account_id` text NOT NULL,
@@ -53,6 +92,23 @@ CREATE TABLE `organization` (
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `organization_slug_unique` ON `organization` (`slug`);--> statement-breakpoint
+CREATE TABLE `passkey` (
+	`id` text PRIMARY KEY NOT NULL,
+	`name` text,
+	`public_key` text NOT NULL,
+	`user_id` text NOT NULL,
+	`credential_id` text NOT NULL,
+	`counter` integer NOT NULL,
+	`device_type` text NOT NULL,
+	`backed_up` integer NOT NULL,
+	`transports` text,
+	`created_at` integer,
+	`aaguid` text,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `passkey_userId_idx` ON `passkey` (`user_id`);--> statement-breakpoint
+CREATE INDEX `passkey_credentialID_idx` ON `passkey` (`credential_id`);--> statement-breakpoint
 CREATE TABLE `session` (
 	`id` text PRIMARY KEY NOT NULL,
 	`expires_at` integer NOT NULL,
@@ -62,12 +118,23 @@ CREATE TABLE `session` (
 	`ip_address` text,
 	`user_agent` text,
 	`user_id` text NOT NULL,
+	`impersonated_by` text,
 	`active_organization_id` text,
 	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `session_token_unique` ON `session` (`token`);--> statement-breakpoint
 CREATE INDEX `session_userId_idx` ON `session` (`user_id`);--> statement-breakpoint
+CREATE TABLE `two_factor` (
+	`id` text PRIMARY KEY NOT NULL,
+	`secret` text NOT NULL,
+	`backup_codes` text NOT NULL,
+	`user_id` text NOT NULL,
+	FOREIGN KEY (`user_id`) REFERENCES `user`(`id`) ON UPDATE no action ON DELETE cascade
+);
+--> statement-breakpoint
+CREATE INDEX `twoFactor_secret_idx` ON `two_factor` (`secret`);--> statement-breakpoint
+CREATE INDEX `twoFactor_userId_idx` ON `two_factor` (`user_id`);--> statement-breakpoint
 CREATE TABLE `user` (
 	`id` text PRIMARY KEY NOT NULL,
 	`name` text NOT NULL,
@@ -75,7 +142,12 @@ CREATE TABLE `user` (
 	`email_verified` integer DEFAULT false NOT NULL,
 	`image` text,
 	`created_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
-	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL
+	`updated_at` integer DEFAULT (cast(unixepoch('subsecond') * 1000 as integer)) NOT NULL,
+	`role` text,
+	`banned` integer DEFAULT false,
+	`ban_reason` text,
+	`ban_expires` integer,
+	`two_factor_enabled` integer DEFAULT false
 );
 --> statement-breakpoint
 CREATE UNIQUE INDEX `user_email_unique` ON `user` (`email`);--> statement-breakpoint

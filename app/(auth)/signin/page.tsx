@@ -2,21 +2,38 @@
 
 import { authClient } from '@/lib/auth-client'
 import { signInAction } from '../../actions/auth'
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { useState } from 'react'
 
 import { Button } from '@/components/ui/button'
 
 import { Separator } from '@radix-ui/react-separator'
 import Link from 'next/link'
-import { useSession } from '@/hooks/useSession'
-import { redirect } from 'next/navigation'
+
+import { useRouter, useSearchParams } from 'next/navigation'
+import { toast } from 'sonner'
+
+import { getCallbackURL } from '@/lib/shared'
+import { Key } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export default function SigninPage() {
-    const session = useSession()
-    if (session) {
-        redirect('/dashboard')
-    }
+    const router = useRouter()
+    const params = useSearchParams()
+    useEffect(() => {
+        authClient.oneTap({
+            fetchOptions: {
+                onError: ({ error }: { error: { message: string } }) => {
+                    toast.error(error.message || 'An error occurred')
+                },
+                onSuccess: () => {
+                    toast.success('Successfully signed in')
+                    router.push(getCallbackURL(params))
+                }
+            }
+        })
+    }, [router, params])
+
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
 
@@ -103,7 +120,7 @@ export default function SigninPage() {
                         </Button>
                     </div>
                 </form>
-                <div className='w-full flex justify-center'>
+                <div className='w-full flex flex-col items-center gap-4 justify-center'>
                     <button
                         type='button'
                         className='text-white bg-[#4285F4] hover:bg-[#4285F4]/90 focus:ring-4 focus:outline-none focus:ring-[#4285F4]/50 box-border border border-transparent font-medium leading-5 text-sm px-4 py-2 text-center inline-flex items-center rounded-md mt-2 disabled:opacity-50 cursor-pointer'
@@ -125,6 +142,30 @@ export default function SigninPage() {
                         </svg>
                         Iniciar con Google
                     </button>
+                    <Button
+                        variant='outline'
+                        className={cn(
+                            'w-full gap-2 flex items-center relative'
+                        )}
+                        onClick={async () => {
+                            await authClient.signIn.passkey({
+                                fetchOptions: {
+                                    onSuccess() {
+                                        toast.success('Successfully signed in')
+                                        router.push(getCallbackURL(params))
+                                    },
+                                    onError(context) {
+                                        toast.error(
+                                            'Authentication failed: ' +
+                                                context.error.message
+                                        )
+                                    }
+                                }
+                            })
+                        }}>
+                        <Key size={16} />
+                        <span>Sign in with Passkey</span>
+                    </Button>
                     {error && (
                         <div className='mb-4 p-3 bg-red-100 text-red-600 rounded-md text-sm'>
                             {error}

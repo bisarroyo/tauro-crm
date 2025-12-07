@@ -1,8 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
-
-import { ThemeProviderWrapper } from '@/lib/theme-provider'
+import { Providers } from './provider'
 
 const geistSans = Geist({
     variable: '--font-geist-sans',
@@ -15,8 +14,9 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-    title: 'Tauro CRM',
-    description: 'Gestión de clientes'
+    title: 'CRM',
+    description:
+        'Gestión de clientes con IA para potenciar tus ventas y relaciones.'
 }
 
 export default function RootLayout({
@@ -25,10 +25,10 @@ export default function RootLayout({
     children: React.ReactNode
 }>) {
     return (
-        <html lang='es'>
+        <html lang='es' suppressHydrationWarning>
             <body
                 className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-                <ThemeProviderWrapper>{children}</ThemeProviderWrapper>
+                <Providers>{children}</Providers>
             </body>
         </html>
     )
