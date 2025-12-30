@@ -17,14 +17,16 @@ export default function LayoutSidebar({
         <SidebarProvider>
             <AppSidebar />
             <SidebarInset>
-                <div className=''>
+                <div className='fixed top-0 left-0 right-0 z-20 md:pl-64'>
                     <Header>
                         <div className='flex items-center gap-2'>
                             <SidebarTrigger className='-ml-1' />
                         </div>
                     </Header>
                 </div>
-                <main className='min-h-screen w-full md:p-4'>{children}</main>
+                <main className='min-h-screen w-full md:px-8 pt-20'>
+                    {children}
+                </main>
             </SidebarInset>
         </SidebarProvider>
     )

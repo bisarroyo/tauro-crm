@@ -22,9 +22,18 @@ export async function PUT(req: Request, { params }: RouteParams) {
     const id = Number(idParam)
     const body = await req.json()
 
-    const session = await auth.api.getSession()
+    const session = await auth.api.getSession({ headers: req.headers })
     if (!session)
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const editContacts = await auth.api.userHasPermission({
+        body: {
+            userId: session?.user.id || '',
+            permission: {
+                leads: ['update']
+            }
+        }
+    })
 
     const contact = await db.query.contacts.findFirst({
         where: eq(contacts.id, id)
@@ -32,11 +41,7 @@ export async function PUT(req: Request, { params }: RouteParams) {
     if (!contact)
         return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    // si no es admin y no assigned, rechaza
-    if (
-        session.user.role !== 'admin' &&
-        session.user.id !== contact.assignedTo
-    ) {
+    if (!editContacts.success || contact.assignedTo !== session.user.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 

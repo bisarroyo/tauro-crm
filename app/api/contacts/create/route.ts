@@ -18,7 +18,7 @@ export async function POST(req: Request) {
             phone,
             email,
             assignedTo: assignedTo ?? session.user.id
-        })
+        } as ContactType)
         .returning()
 
     return NextResponse.json(inserted[0])

@@ -53,7 +53,7 @@ export default function ChatsPage() {
         }
     }, [state.success, router])
     return (
-        <div className='p-0 md:p-6'>
+        <div className=''>
             <h2 className='text-xl mb-4'>Crear contacto nuevo</h2>
             <form action={formAction}>
                 <div className='grid w-full max-w-sm gap-6'>

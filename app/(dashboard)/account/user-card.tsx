@@ -179,6 +179,7 @@ export default function UserCard(props: {
                     {activeSessions
                         .filter((session) => session.userAgent)
                         .map((session) => {
+                            console.log(session)
                             return (
                                 <div key={session.id}>
                                     <div className='flex items-center gap-2 text-sm  text-black font-medium dark:text-white'>

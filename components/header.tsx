@@ -1,5 +1,6 @@
 'use client'
 import { ModeToggle } from '@/components/ui/mode-toggle' // si ya tienes un switch de tema
+import SearchBar from './search-bar'
 
 export function Header({ children }: { children: React.ReactNode }) {
     return (
@@ -13,7 +14,7 @@ export function Header({ children }: { children: React.ReactNode }) {
       '>
             {children}
             <div className='flex items-center gap-3'>
-                {/* Theme Toggle */}
+                <SearchBar />
                 <ModeToggle />
             </div>
         </header>

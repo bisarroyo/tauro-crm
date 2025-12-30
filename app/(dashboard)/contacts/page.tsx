@@ -5,6 +5,7 @@ import { useDebounce } from 'use-debounce'
 import { useState } from 'react'
 import EditContactModal from '@/components/edit-contact-dialog'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
     Select,
     SelectTrigger,
@@ -12,12 +13,33 @@ import {
     SelectContent,
     SelectItem
 } from '@/components/ui/select'
+import { Skeleton } from '@/components/ui/skeleton'
+import {
+    Table,
+    TableBody,
+    TableCaption,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from '@/components/ui/table'
 
 // Nuevo componente que usa useQuery (debe estar dentro del Provider)
 export default function ContactsContainer() {
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
     const [debouncedSearch] = useDebounce(search, 500)
+
+    const [selected, setSelected] = useState<Set<string>>(new Set())
+
+    const toggleOne = (id: string) => {
+        setSelected((prev) => {
+            const copy = new Set(prev)
+            if (copy.has(id)) copy.delete(id)
+            else copy.add(id)
+            return copy
+        })
+    }
 
     // Nuevo: tamaño de página seleccionable
     const [pageSize, setPageSize] = useState<number>(10)
@@ -48,7 +70,7 @@ export default function ContactsContainer() {
     const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
     return (
-        <div className='p-6'>
+        <div className=''>
             <div className='flex gap-3 mb-4 items-center'>
                 <input
                     className='border p-2 rounded w-80'
@@ -83,32 +105,73 @@ export default function ContactsContainer() {
             </div>
 
             {isLoading ? (
-                'Cargando...'
+                <>
+                    <div className='mb-2 text-sm text-muted-foreground'>
+                        Cargando...
+                    </div>
+                    <div className='flex gap-2 flex-col'>
+                        {Array.from({ length: 5 }).map((_, i) => (
+                            <div key={i} className='w-full'>
+                                <div>
+                                    <Skeleton className='h-5 w-1/4 rounded-md mb-1' />
+                                </div>
+                                <Skeleton
+                                    key={i}
+                                    className='h-12 w-full rounded-md mb-2'
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </>
             ) : (
                 <>
                     <div className='mb-2 text-sm text-muted-foreground'>
                         Mostrando {items.length} de {total} contactos
                     </div>
 
-                    <table className='w-full border'>
-                        <tbody>
+                    <Table>
+                        <TableCaption>Mostrando contactos</TableCaption>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>
+                                    <Checkbox />
+                                </TableHead>
+
+                                <TableHead className='w-[500px]'>
+                                    Nombre
+                                </TableHead>
+                                <TableHead>Correo</TableHead>
+                                <TableHead>Teléfono</TableHead>
+                                <TableHead className='text-right'>
+                                    Acciones
+                                </TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
                             {Array.isArray(items)
                                 ? items.map((c: ContactType, idx: number) => (
-                                      <tr key={c?.id ?? idx} className='border'>
-                                          <td className='p-3'>
+                                      <TableRow key={c?.id ?? idx}>
+                                          <TableCell>
+                                              <Checkbox />
+                                          </TableCell>
+                                          <TableCell className='p-3'>
                                               {c?.firstName ?? ''}{' '}
                                               {c?.lastName ?? ''}
-                                          </td>
-                                          <td>{c?.email ?? ''}</td>
-                                          <td>{c?.phone ?? ''}</td>
-                                          <td>
+                                          </TableCell>
+                                          <TableCell>
+                                              {c?.email ?? ''}
+                                          </TableCell>
+                                          <TableCell>
+                                              {c?.phone ?? ''}
+                                          </TableCell>
+                                          <TableCell className='flex justify-end'>
                                               <EditContactModal contact={c} />
-                                          </td>
-                                      </tr>
+                                          </TableCell>
+                                      </TableRow>
                                   ))
                                 : null}
-                        </tbody>
-                    </table>
+                        </TableBody>
+                    </Table>
 
                     {/* Paginación simple con shadcn Button */}
                     <div className='flex items-center justify-between mt-4'>

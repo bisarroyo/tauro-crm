@@ -1,15 +1,12 @@
 'use client'
 import * as React from 'react'
 import {
-    AudioWaveform,
     BookOpen,
-    Bot,
-    Command,
-    GalleryVerticalEnd,
-    Map,
-    MessageSquareText,
+    Cog,
+    MessagesSquare,
     PieChart,
     Settings2,
+    Tag,
     UsersRound
 } from 'lucide-react'
 import { NavMain } from '@/components/nav-main'
@@ -27,23 +24,6 @@ import {
 import { useSession } from '@/hooks/useSession'
 
 const data = {
-    teams: [
-        {
-            name: 'Acme Inc',
-            logo: GalleryVerticalEnd,
-            plan: 'Enterprise'
-        },
-        {
-            name: 'Acme Corp.',
-            logo: AudioWaveform,
-            plan: 'Startup'
-        },
-        {
-            name: 'Evil Corp.',
-            logo: Command,
-            plan: 'Free'
-        }
-    ],
     navMain: [
         {
             title: 'Leads',
@@ -57,7 +37,7 @@ const data = {
                 },
                 {
                     title: 'Cargar Leads',
-                    url: '/clients/import'
+                    url: '/contacts/import'
                 },
                 {
                     title: 'Crear lead',
@@ -68,7 +48,7 @@ const data = {
         {
             title: 'Chats',
             url: '#',
-            icon: Bot,
+            icon: MessagesSquare,
             items: [
                 {
                     title: 'Chats',
@@ -129,19 +109,19 @@ const data = {
     ],
     chats: [
         {
-            name: 'Conversaciones',
-            url: '/chats',
-            icon: MessageSquareText
+            name: 'AI tags',
+            url: '/tags',
+            icon: Tag
         },
         {
-            name: 'Sales & Marketing',
+            name: 'Ajustes',
+            url: '#',
+            icon: Cog
+        },
+        {
+            name: 'Reportes',
             url: '#',
             icon: PieChart
-        },
-        {
-            name: 'Travel',
-            url: '#',
-            icon: Map
         }
     ]
 }
@@ -151,7 +131,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     return (
         <Sidebar collapsible='icon' {...props}>
             <SidebarHeader>
-                <TeamSwitcher teams={data.teams} />
+                <TeamSwitcher />
             </SidebarHeader>
             <SidebarContent>
                 <NavMain items={data.navMain} />

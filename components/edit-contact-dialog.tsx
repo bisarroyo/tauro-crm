@@ -14,14 +14,16 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useEffect, useState } from 'react'
+import { toast } from 'sonner'
 
 export default function EditContactDialog({
     contact
 }: {
     contact: ContactType
 }) {
+    const [open, setOpen] = useState(false)
     const queryClient = useQueryClient()
-    const mutation = useMutation({
+    const { mutate, isPending } = useMutation({
         mutationFn: async (values) => {
             await fetch(`/api/contacts/${contact.id}`, {
                 method: 'PUT',
@@ -30,7 +32,12 @@ export default function EditContactDialog({
             })
         },
         onSuccess: () => {
+            toast.success('Contacto actualizado con éxito')
             queryClient.invalidateQueries({ queryKey: ['contacts'] })
+            setOpen(false)
+        },
+        onError: (error, variables, onMutateResult, context) => {
+            console.log(error, variables, onMutateResult, context)
         }
     })
     const [editingContact, setEditingContact] = useState<ContactType | null>(
@@ -46,7 +53,7 @@ export default function EditContactDialog({
     const handleUpdate = (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
         if (editingContact) {
-            mutation.mutate(editingContact)
+            mutate(editingContact)
         }
     }
 
@@ -55,10 +62,10 @@ export default function EditContactDialog({
     }, [contact])
 
     return (
-        <Dialog>
+        <Dialog open={open} onOpenChange={setOpen}>
             <form>
                 <DialogTrigger asChild>
-                    <Button variant='outline'>Editar</Button>
+                    <Button variant='secondary'>Editar</Button>
                 </DialogTrigger>
                 <DialogContent className='sm:max-w-[425px]'>
                     <DialogHeader>
@@ -108,11 +115,18 @@ export default function EditContactDialog({
                         </div>
                     </div>
                     <DialogFooter>
-                        <DialogClose asChild>
+                        <DialogClose
+                            asChild
+                            onClick={() => setEditingContact(contact)}>
                             <Button variant='outline'>Cancelar</Button>
                         </DialogClose>
-                        <Button type='submit' onClick={handleUpdate}>
-                            Aplicar cambios
+                        <Button
+                            type='submit'
+                            onClick={handleUpdate}
+                            disabled={isPending}>
+                            {isPending
+                                ? 'Aplicando cambios...'
+                                : 'Guardar cambios'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

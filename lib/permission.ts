@@ -8,7 +8,7 @@ export const statement = {
 export const ac = createAccessControl(statement)
 
 export const user = ac.newRole({
-    leads: ['view']
+    leads: ['view', 'update']
 })
 
 export const admin = ac.newRole({
