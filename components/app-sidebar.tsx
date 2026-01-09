@@ -12,12 +12,10 @@ import {
 import { NavMain } from '@/components/nav-main'
 import { NavProjects } from '@/components/nav-projects'
 import { NavUser } from '@/components/nav-user'
-import { TeamSwitcher } from '@/components/team-switcher'
 import {
     Sidebar,
     SidebarContent,
     SidebarFooter,
-    SidebarHeader,
     SidebarRail
 } from '@/components/ui/sidebar'
 
@@ -36,6 +34,10 @@ const data = {
                     url: '/contacts'
                 },
                 {
+                    title: 'Buscar Leads',
+                    url: '/contacts/search'
+                },
+                {
                     title: 'Cargar Leads',
                     url: '/contacts/import'
                 },
@@ -52,11 +54,11 @@ const data = {
             items: [
                 {
                     title: 'Chats',
-                    url: 'dashboard/chats'
+                    url: '/chats'
                 },
                 {
                     title: 'Crear chat AI',
-                    url: 'dashboard/chats/new'
+                    url: '/chats/new'
                 }
             ]
         },
@@ -68,41 +70,21 @@ const data = {
                 {
                     title: 'Introducción',
                     url: '#'
-                },
-                {
-                    title: 'Get Started',
-                    url: '#'
-                },
-                {
-                    title: 'Tutorials',
-                    url: '#'
-                },
-                {
-                    title: 'Changelog',
-                    url: '#'
                 }
             ]
         },
         {
-            title: 'Settings',
+            title: 'Configuración',
             url: '#',
             icon: Settings2,
             items: [
                 {
-                    title: 'General',
-                    url: '#'
+                    title: 'Tags',
+                    url: '/tags'
                 },
                 {
-                    title: 'Team',
-                    url: '#'
-                },
-                {
-                    title: 'Billing',
-                    url: '#'
-                },
-                {
-                    title: 'Limits',
-                    url: '#'
+                    title: 'Campañas',
+                    url: '/campaigns'
                 }
             ]
         }
@@ -127,12 +109,8 @@ const data = {
 }
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const session = useSession()
-    console.log(session)
     return (
         <Sidebar collapsible='icon' {...props}>
-            <SidebarHeader>
-                <TeamSwitcher />
-            </SidebarHeader>
             <SidebarContent>
                 <NavMain items={data.navMain} />
                 <NavProjects projects={data.chats} />

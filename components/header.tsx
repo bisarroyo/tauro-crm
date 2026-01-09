@@ -1,6 +1,8 @@
 'use client'
 import { ModeToggle } from '@/components/ui/mode-toggle' // si ya tienes un switch de tema
-import SearchBar from './search-bar'
+import { Button } from './ui/button'
+import { Search } from 'lucide-react'
+import Link from 'next/link'
 
 export function Header({ children }: { children: React.ReactNode }) {
     return (
@@ -14,7 +16,11 @@ export function Header({ children }: { children: React.ReactNode }) {
       '>
             {children}
             <div className='flex items-center gap-3'>
-                <SearchBar />
+                <Link href='/contacts/search'>
+                    <Button variant='outline'>
+                        Buscar leads <Search />
+                    </Button>
+                </Link>
                 <ModeToggle />
             </div>
         </header>

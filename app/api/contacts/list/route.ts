@@ -1,7 +1,7 @@
 import { auth } from '@/lib/auth'
 import { db } from '@/db'
-import { contacts } from '@/db/schema'
-import { eq, like, and } from 'drizzle-orm'
+import { contacts, contactGroups } from '@/db/schema'
+import { eq, like, and, inArray, count } from 'drizzle-orm'
 
 export async function GET(req: Request) {
     const session = await auth.api.getSession({ headers: req.headers })
@@ -17,35 +17,44 @@ export async function GET(req: Request) {
 
     const { searchParams } = new URL(req.url)
     const page = Number(searchParams.get('page') ?? '1')
-    const limit = Number(searchParams.get('limit') ?? '10')
+    const limit = Number(searchParams.get('pageSize') ?? '10')
+
     const search = searchParams.get('search') ?? ''
+    const groupId = searchParams.get('groupId')
+        ? Number(searchParams.get('groupId'))
+        : null
 
-    console.log(seeAllContacts)
-
-    if (seeAllContacts.success) {
-        const data = await db
-            .select()
-            .from(contacts)
-            .where(like(contacts.firstName, `%${search}%`))
-            .limit(limit)
-            .offset((page - 1) * limit)
-
-        return Response.json(data)
-    }
-
-    const data = await db
+    const baseWhere = and(
+        seeAllContacts.success
+            ? undefined
+            : eq(contacts.assignedTo, session.user.id),
+        like(contacts.firstName, `%${search}%`),
+        groupId
+            ? inArray(
+                  contacts.id,
+                  db
+                      .select({ id: contactGroups.contactId })
+                      .from(contactGroups)
+                      .where(eq(contactGroups.groupId, groupId))
+              )
+            : undefined
+    )
+    const items = await db
         .select()
         .from(contacts)
-        .where(
-            and(
-                eq(contacts.assignedTo, session.user.id),
-                like(contacts.firstName, `%${search}%`)
-            )
-        )
+        .where(baseWhere)
         .limit(limit)
         .offset((page - 1) * limit)
 
-    return Response.json(data)
+    const [{ total }] = await db
+        .select({ total: count() })
+        .from(contacts)
+        .where(baseWhere)
+
+    return Response.json({
+        items,
+        total
+    })
 }
 
 export async function POST(req: Request) {
@@ -55,7 +64,6 @@ export async function POST(req: Request) {
     const body = await req.json()
 
     await db.insert(contacts).values({
-        id: crypto.randomUUID(),
         ...body
     })
 

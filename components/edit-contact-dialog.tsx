@@ -77,7 +77,7 @@ export default function EditContactDialog({
                     </DialogHeader>
                     <div className='grid gap-4'>
                         <div className='grid gap-3'>
-                            <Label htmlFor='name-1'>Name</Label>
+                            <Label htmlFor='firstName'>Nombre</Label>
                             <Input
                                 id='firstName'
                                 name='firstName'
@@ -86,7 +86,7 @@ export default function EditContactDialog({
                             />
                         </div>
                         <div className='grid gap-3'>
-                            <Label htmlFor='name-1'>Apellidos</Label>
+                            <Label htmlFor='lastName'>Apellidos</Label>
                             <Input
                                 id='lastName'
                                 name='lastName'
@@ -95,7 +95,7 @@ export default function EditContactDialog({
                             />
                         </div>
                         <div className='grid gap-3'>
-                            <Label htmlFor='name-1'>Teléfono</Label>
+                            <Label htmlFor='phone'>Teléfono</Label>
                             <Input
                                 id='phone'
                                 name='phone'
@@ -104,7 +104,7 @@ export default function EditContactDialog({
                             />
                         </div>
                         <div className='grid gap-3'>
-                            <Label htmlFor='name-1'>Email</Label>
+                            <Label htmlFor='email'>Email</Label>
                             <Input
                                 id='email'
                                 name='email'

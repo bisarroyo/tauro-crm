@@ -23,32 +23,52 @@ import {
     TableHeader,
     TableRow
 } from '@/components/ui/table'
+import { GroupManager } from '@/components/group-manager'
+import { AddToGroupDialog } from '@/components/add-to-group-dialog'
+import { getGroups } from '@/app/actions/groups'
+import { useEffect } from 'react'
+import { ScrollArea } from '@/components/ui/scroll-area'
+import Link from 'next/link'
+
+type Group = {
+    id: number
+    name: string
+    color: string | null
+}
 
 // Nuevo componente que usa useQuery (debe estar dentro del Provider)
 export default function ContactsContainer() {
     const [page, setPage] = useState(1)
     const [search, setSearch] = useState('')
     const [debouncedSearch] = useDebounce(search, 500)
-
-    const [selected, setSelected] = useState<Set<string>>(new Set())
-
-    const toggleOne = (id: string) => {
-        setSelected((prev) => {
-            const copy = new Set(prev)
-            if (copy.has(id)) copy.delete(id)
-            else copy.add(id)
-            return copy
-        })
-    }
+    const [selectedGroup, setSelectedGroup] = useState<string>('all')
+    const [groups, setGroups] = useState<Group[]>([])
 
     // Nuevo: tamaño de página seleccionable
     const [pageSize, setPageSize] = useState<number>(10)
+    const [selected, setSelected] = useState<Set<string>>(new Set())
+
+    useEffect(() => {
+        getGroups().then((res) => {
+            if (res.success && res.data) {
+                setGroups(res.data)
+            }
+        })
+    }, [])
+
+    const refreshGroups = () => {
+        getGroups().then((res) => {
+            if (res.success && res.data) {
+                setGroups(res.data)
+            }
+        })
+    }
 
     const { data, isLoading } = useQuery({
-        queryKey: ['contacts', page, pageSize, debouncedSearch],
+        queryKey: ['contacts', page, pageSize, debouncedSearch, selectedGroup],
         queryFn: async () => {
             const res = await fetch(
-                `/api/contacts/list?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(debouncedSearch)}`
+                `/api/contacts/list?page=${page}&pageSize=${pageSize}&search=${encodeURIComponent(debouncedSearch)}&groupId=${selectedGroup === 'all' ? '' : selectedGroup}`
             )
             if (!res.ok) {
                 return { items: [], total: 0 }
@@ -69,19 +89,65 @@ export default function ContactsContainer() {
     const total: number = data?.total ?? 0
     const totalPages = Math.max(1, Math.ceil(total / pageSize))
 
+    const toggleOne = (id: string) => {
+        setSelected((prev) => {
+            const copy = new Set(prev)
+            if (copy.has(id)) copy.delete(id)
+            else copy.add(id)
+            return copy
+        })
+    }
+
     return (
         <div className=''>
-            <div className='flex gap-3 mb-4 items-center'>
-                <input
-                    className='border p-2 rounded w-80'
-                    placeholder='Buscar...'
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
+            <div className='flex gap-3 mb-4 items-center justify-between'>
+                <div className='flex gap-3 items-center flex-1'>
+                    <input
+                        className='border p-2 rounded w-64'
+                        placeholder='Buscar...'
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                    />
 
-                {/* Select shadcn para pageSize */}
-                <div className='ml-auto flex items-center gap-2'>
-                    <span className='text-sm text-muted-foreground'>
+                    <Select
+                        value={selectedGroup}
+                        onValueChange={setSelectedGroup}>
+                        <SelectTrigger className='w-[180px]'>
+                            <SelectValue placeholder='Filter by Group' />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value='all'>All Contacts</SelectItem>
+                            {groups.map((g) => (
+                                <SelectItem key={g.id} value={String(g.id)}>
+                                    <div className='flex items-center gap-2'>
+                                        <div
+                                            className='w-2 h-2 rounded-full'
+                                            style={{
+                                                backgroundColor:
+                                                    g.color || '#000'
+                                            }}
+                                        />
+                                        {g.name}
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <GroupManager onGroupChange={refreshGroups} />
+                </div>
+
+                {/* Select shadcn para pageSize y acciones */}
+                <div className='flex items-center gap-2'>
+                    {selected.size > 0 && (
+                        <AddToGroupDialog
+                            selectedCount={selected.size}
+                            selectedIds={Array.from(selected)}
+                            onSuccess={() => setSelected(new Set())}
+                        />
+                    )}
+
+                    <span className='text-sm text-muted-foreground ml-2'>
                         Mostrar:
                     </span>
                     <Select
@@ -106,25 +172,22 @@ export default function ContactsContainer() {
 
             {isLoading ? (
                 <>
-                    <div className='mb-2 text-sm text-muted-foreground'>
+                    <div className='my-2 text-sm text-muted-foreground'>
                         Cargando...
                     </div>
                     <div className='flex gap-2 flex-col'>
                         {Array.from({ length: 5 }).map((_, i) => (
                             <div key={i} className='w-full'>
                                 <div>
-                                    <Skeleton className='h-5 w-1/4 rounded-md mb-1' />
+                                    <Skeleton className='h-4 w-1/4 rounded-md mb-1' />
                                 </div>
-                                <Skeleton
-                                    key={i}
-                                    className='h-12 w-full rounded-md mb-2'
-                                />
+                                <Skeleton className='h-8 w-full rounded-md mb-2' />
                             </div>
                         ))}
                     </div>
                 </>
             ) : (
-                <>
+                <ScrollArea className='h-[calc(100vh-200px)] w-full pr-4'>
                     <div className='mb-2 text-sm text-muted-foreground'>
                         Mostrando {items.length} de {total} contactos
                     </div>
@@ -134,7 +197,24 @@ export default function ContactsContainer() {
                         <TableHeader>
                             <TableRow>
                                 <TableHead>
-                                    <Checkbox />
+                                    <Checkbox
+                                        checked={
+                                            items.length > 0 &&
+                                            items.every((c) =>
+                                                selected.has(String(c.id))
+                                            )
+                                        }
+                                        onCheckedChange={(checked) => {
+                                            if (checked) {
+                                                const allIds = items.map((c) =>
+                                                    String(c.id)
+                                                )
+                                                setSelected(new Set(allIds))
+                                            } else {
+                                                setSelected(new Set())
+                                            }
+                                        }}
+                                    />
                                 </TableHead>
 
                                 <TableHead className='w-[500px]'>
@@ -152,16 +232,26 @@ export default function ContactsContainer() {
                                 ? items.map((c: ContactType, idx: number) => (
                                       <TableRow key={c?.id ?? idx}>
                                           <TableCell>
-                                              <Checkbox />
+                                              <Checkbox
+                                                  checked={selected.has(
+                                                      String(c?.id)
+                                                  )}
+                                                  onCheckedChange={() =>
+                                                      toggleOne(String(c?.id))
+                                                  }
+                                              />
                                           </TableCell>
                                           <TableCell className='p-3'>
-                                              {c?.firstName ?? ''}{' '}
-                                              {c?.lastName ?? ''}
+                                              <Link href={`/contacts/${c?.id}`}>
+                                                  {c?.firstName ?? ''}{' '}
+                                                  {c?.lastName ?? ''}
+                                              </Link>
                                           </TableCell>
                                           <TableCell>
                                               {c?.email ?? ''}
                                           </TableCell>
                                           <TableCell>
+                                              +{c?.countryCode ?? ''}
                                               {c?.phone ?? ''}
                                           </TableCell>
                                           <TableCell className='flex justify-end'>
@@ -172,60 +262,51 @@ export default function ContactsContainer() {
                                 : null}
                         </TableBody>
                     </Table>
-
-                    {/* Paginación simple con shadcn Button */}
-                    <div className='flex items-center justify-between mt-4'>
-                        <div className='flex items-center gap-2'>
-                            <Button
-                                variant='outline'
-                                disabled={page <= 1}
-                                onClick={() =>
-                                    setPage((p) => Math.max(1, p - 1))
-                                }>
-                                Anterior
-                            </Button>
-
-                            <span className='px-2'>
-                                Página {page} / {totalPages}
-                            </span>
-
-                            <Button
-                                variant='outline'
-                                disabled={page >= totalPages}
-                                onClick={() =>
-                                    setPage((p) => Math.min(totalPages, p + 1))
-                                }>
-                                Siguiente
-                            </Button>
-                        </div>
-
-                        {/* Opcional: salto rápido a página */}
-                        <div className='flex items-center gap-2'>
-                            <span className='text-sm text-muted-foreground'>
-                                Ir a
-                            </span>
-                            <select
-                                className='border rounded p-1'
-                                value={String(page)}
-                                onChange={(e) => {
-                                    const v = Number(e.target.value)
-                                    if (!Number.isNaN(v))
-                                        setPage(
-                                            Math.min(Math.max(1, v), totalPages)
-                                        )
-                                }}>
-                                {Array.from({ length: totalPages }).map(
-                                    (_, i) => (
-                                        <option key={i} value={i + 1}>
-                                            {i + 1}
-                                        </option>
-                                    )
-                                )}
-                            </select>
-                        </div>
-                    </div>
-                </>
+                </ScrollArea>
             )}
+            {/* Paginación simple con shadcn Button */}
+            <div className='flex items-center justify-between mt-4 fixed bottom-0 w-full'>
+                <div className='flex items-center gap-2'>
+                    <Button
+                        variant='outline'
+                        disabled={page <= 1}
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                        Anterior
+                    </Button>
+
+                    <span className='px-2'>
+                        Página {page} / {totalPages}
+                    </span>
+
+                    <Button
+                        variant='outline'
+                        disabled={page >= totalPages}
+                        onClick={() =>
+                            setPage((p) => Math.min(totalPages, p + 1))
+                        }>
+                        Siguiente
+                    </Button>
+                </div>
+
+                {/* Opcional: salto rápido a página */}
+                <div className='flex items-center gap-2'>
+                    <span className='text-sm text-muted-foreground'>Ir a</span>
+                    <select
+                        className='border rounded p-1'
+                        value={String(page)}
+                        onChange={(e) => {
+                            const v = Number(e.target.value)
+                            if (!Number.isNaN(v))
+                                setPage(Math.min(Math.max(1, v), totalPages))
+                        }}>
+                        {Array.from({ length: totalPages }).map((_, i) => (
+                            <option key={i} value={i + 1}>
+                                {i + 1}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+            </div>
         </div>
     )
 }
