@@ -13,7 +13,9 @@ import {
     TableRow
 } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
-import { Upload } from 'lucide-react'
+import { AlertCircleIcon, Upload } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 type ContactCsv = {
     firstName: string
@@ -21,6 +23,7 @@ type ContactCsv = {
     email: string
     phone: string
     countryCode: string
+    hasError: boolean
 }
 
 export default function CsvContactUploader({
@@ -61,12 +64,20 @@ export default function CsvContactUploader({
                         )
                             return null
 
+                        const hasError =
+                            !firstName ||
+                            !lastName ||
+                            !email ||
+                            !phone ||
+                            !countryCode
+
                         return {
                             firstName,
                             lastName,
                             email,
                             countryCode,
-                            phone
+                            phone,
+                            hasError
                         }
                     })
                     .filter(Boolean) as ContactCsv[]
@@ -82,8 +93,32 @@ export default function CsvContactUploader({
         })
     }
 
+    const updateField = (
+        index: number,
+        field: keyof ContactCsv,
+        value: string
+    ) => {
+        setRows((prev) => {
+            const updated = [...prev]
+            updated[index] = {
+                ...updated[index],
+                [field]: value
+            }
+
+            const r = updated[index]
+            updated[index].hasError =
+                !r.firstName ||
+                !r.lastName ||
+                !r.email ||
+                !r.phone ||
+                !r.countryCode
+
+            return updated
+        })
+    }
+
     return (
-        <Card className='w-full max-w-2xl mx-auto'>
+        <Card className='w-full mx-auto'>
             <CardHeader>
                 <CardTitle>Importar contactos vía CSV</CardTitle>
             </CardHeader>
@@ -95,6 +130,16 @@ export default function CsvContactUploader({
                 </div>
 
                 {error && <div className='text-red-500 text-sm'>{error}</div>}
+                {rows.some((r) => r.hasError) && (
+                    <Alert variant='destructive'>
+                        <AlertCircleIcon />
+                        <AlertTitle>No se puede procesar el archivo</AlertTitle>
+                        <AlertDescription>
+                            Hay filas con datos incompletos. Revisa las filas
+                            marcadas en rojo.
+                        </AlertDescription>
+                    </Alert>
+                )}
 
                 {rows.length > 0 && (
                     <div className='border rounded-lg overflow-hidden'>
@@ -110,12 +155,75 @@ export default function CsvContactUploader({
                             </TableHeader>
                             <TableBody>
                                 {rows.map((r, i) => (
-                                    <TableRow key={i}>
-                                        <TableCell>{r.firstName}</TableCell>
-                                        <TableCell>{r.lastName}</TableCell>
-                                        <TableCell>{r.email}</TableCell>
-                                        <TableCell>{r.countryCode}</TableCell>
-                                        <TableCell>{r.phone}</TableCell>
+                                    <TableRow
+                                        key={i}
+                                        className={cn(
+                                            r.hasError && 'text-red-500'
+                                        )}>
+                                        <TableCell>
+                                            <Input
+                                                value={r.firstName}
+                                                onChange={(e) =>
+                                                    updateField(
+                                                        i,
+                                                        'firstName',
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                        </TableCell>
+
+                                        <TableCell>
+                                            <Input
+                                                value={r.lastName}
+                                                onChange={(e) =>
+                                                    updateField(
+                                                        i,
+                                                        'lastName',
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                        </TableCell>
+
+                                        <TableCell>
+                                            <Input
+                                                value={r.email}
+                                                onChange={(e) =>
+                                                    updateField(
+                                                        i,
+                                                        'email',
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                        </TableCell>
+                                        <TableCell>
+                                            <Input
+                                                className='w-20'
+                                                value={r.countryCode}
+                                                onChange={(e) =>
+                                                    updateField(
+                                                        i,
+                                                        'countryCode',
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                        </TableCell>
+
+                                        <TableCell>
+                                            <Input
+                                                value={r.phone}
+                                                onChange={(e) =>
+                                                    updateField(
+                                                        i,
+                                                        'phone',
+                                                        e.target.value
+                                                    )
+                                                }
+                                            />
+                                        </TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -127,7 +235,7 @@ export default function CsvContactUploader({
                     <Button
                         className='w-full'
                         onClick={() => onImport(rows)}
-                        disabled={loading}>
+                        disabled={loading || rows.some((r) => r.hasError)}>
                         {loading
                             ? 'Subiendo...'
                             : `Importar ${rows.length} contactos`}

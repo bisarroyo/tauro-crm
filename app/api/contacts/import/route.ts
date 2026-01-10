@@ -10,7 +10,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     // 2. Obtener JSON del body
-    let body
+    let body: ContactType[]
     try {
         body = await req.json()
     } catch {
