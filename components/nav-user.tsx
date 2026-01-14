@@ -96,7 +96,7 @@ export function NavUser({ user }: { user: Session | null }) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <Link href='/account'>
+                        <Link href='/account/settings'>
                             <DropdownMenuItem>
                                 <BadgeCheck />
                                 Account
