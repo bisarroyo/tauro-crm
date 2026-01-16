@@ -1,3 +1,8 @@
+'use client'
+
 export default function Dashboard() {
-    return <h1>Dashboard</h1>
+    const handleClick = async () => {
+        await fetch('/api/whatsapp/register')
+    }
+    return <button onClick={handleClick}>Enviar</button>
 }

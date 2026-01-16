@@ -4,44 +4,69 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Paperclip, Send, Loader2 } from 'lucide-react'
-import { sendMessage } from '@/app/actions/send-message' // We'll assume we wrap server action to be client safe or use direct
-// Actually we need to call server action from client.
+
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+
 export default function ChatInput({ contactId }: { contactId: number }) {
     const [message, setMessage] = useState('')
-    const [sending, setSending] = useState(false)
     const [showUrlInput, setShowUrlInput] = useState(false)
     const [fileUrl, setFileUrl] = useState('')
     const router = useRouter()
+    const queryClient = useQueryClient()
+
+    const sendMessageMutation = useMutation({
+        mutationFn: async (payload: {
+            contactId: number
+            body: string
+            mediaUrl?: string
+            mimeType?: string
+            fileName?: string
+        }) => {
+            const res = await fetch('/api/whatsapp/send', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+            const data = await res.json()
+            if (!res.ok) {
+                throw new Error(data.error || 'Error al enviar mensaje')
+            }
+            return data
+        },
+        onSuccess: () => {
+            setMessage('')
+            setFileUrl('')
+            setShowUrlInput(false)
+            queryClient.invalidateQueries({ queryKey: ['messages', contactId] })
+            router.refresh()
+            toast.success('Mensaje enviado')
+        },
+        onError: (error) => {
+            toast.error(
+                error instanceof Error
+                    ? error.message
+                    : 'Error al enviar mensaje'
+            )
+        }
+    })
 
     const handleSend = async () => {
         if (!message.trim() && !fileUrl) return
 
-        setSending(true)
-        try {
-            const res = await sendMessage({
-                contactId,
-                body: message,
-                mediaUrl: fileUrl || undefined,
-                mimeType: fileUrl ? 'image/jpeg' : undefined, // Quick hack for MVP
-                fileName: fileUrl ? 'image.jpg' : undefined
-            })
+        console.log('Sending message:', { message, contactId })
 
-            if (res.success) {
-                setMessage('')
-                setFileUrl('')
-                setShowUrlInput(false)
-                router.refresh()
-            } else {
-                toast.error(res.error || 'Failed to send')
-            }
-        } catch {
-            toast.error('Error sending message')
-        } finally {
-            setSending(false)
-        }
+        sendMessageMutation.mutate({
+            contactId,
+            body: message,
+            mediaUrl: fileUrl || undefined,
+            mimeType: fileUrl ? 'image/jpeg' : undefined, // Quick hack for MVP
+            fileName: fileUrl ? 'image.jpg' : undefined
+        })
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -89,8 +114,11 @@ export default function ChatInput({ contactId }: { contactId: number }) {
                     size='icon'
                     className='shrink-0'
                     onClick={handleSend}
-                    disabled={sending || (!message.trim() && !fileUrl)}>
-                    {sending ? (
+                    disabled={
+                        sendMessageMutation.isPending ||
+                        (!message.trim() && !fileUrl)
+                    }>
+                    {sendMessageMutation.isPending ? (
                         <Loader2 className='w-5 h-5 animate-spin' />
                     ) : (
                         <Send className='w-5 h-5' />

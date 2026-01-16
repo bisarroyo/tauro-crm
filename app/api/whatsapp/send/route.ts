@@ -1,13 +1,13 @@
-'use server'
-
 import { db } from '@/db'
 import { messages, contacts } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { auth } from '@/lib/auth'
 import { headers } from 'next/headers'
+import { NextResponse } from 'next/server'
 
 const WHATSAPP_TOKEN = process.env.WHATSAPP_ACCESS_TOKEN
 const PHONE_NUMBER_ID = process.env.WHATSAPP_PHONE_NUMBER_ID
+// const PIN = process.env.WHATSAPP_PIN
 
 type SendMessageOptions = {
     contactId: number
@@ -17,19 +17,29 @@ type SendMessageOptions = {
     fileName?: string
 }
 
-export async function sendMessage({
-    contactId,
-    body,
-    mediaUrl,
-    mimeType,
-    fileName
-}: SendMessageOptions) {
+export async function POST(req: Request) {
+    const { contactId, body, mediaUrl, mimeType, fileName } =
+        (await req.json()) as SendMessageOptions
+
     const session = await auth.api.getSession({
         headers: await headers()
     })
 
     if (!session?.user) {
-        return { success: false, error: 'Unauthorized' }
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    if (!WHATSAPP_TOKEN || !PHONE_NUMBER_ID) {
+        return NextResponse.json(
+            { error: 'WhatsApp configuration is missing' },
+            { status: 500 }
+        )
+    }
+    if (!contactId || !body) {
+        return NextResponse.json(
+            { error: 'Missing required parameters' },
+            { status: 400 }
+        )
     }
 
     const contact = await db.query.contacts.findFirst({
@@ -37,7 +47,10 @@ export async function sendMessage({
     })
 
     if (!contact) {
-        return { success: false, error: 'Contact not found' }
+        return NextResponse.json(
+            { error: 'Contact not found' },
+            { status: 404 }
+        )
     }
 
     try {
@@ -83,10 +96,10 @@ export async function sendMessage({
 
         if (!response.ok) {
             console.error('WhatsApp API Error:', start)
-            return {
-                success: false,
-                error: start.error?.message || 'Failed to send message'
-            }
+            return NextResponse.json(
+                { error: start.error?.message || 'WhatsApp API Error' },
+                { status: 500 }
+            )
         }
 
         const waMessageId = start.messages?.[0]?.id
@@ -111,9 +124,12 @@ export async function sendMessage({
             .set({ lastMessageAt: new Date() })
             .where(eq(contacts.id, contact.id))
 
-        return { success: true }
+        return NextResponse.json({ success: true }, { status: 200 })
     } catch (error) {
         console.error('SendMessage Action Error:', error)
-        return { success: false, error: 'Internal Server Error' }
+        return NextResponse.json(
+            { error: 'Failed to send message' },
+            { status: 500 }
+        )
     }
 }

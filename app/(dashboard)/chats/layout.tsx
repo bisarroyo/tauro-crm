@@ -23,7 +23,7 @@ export default async function ChatsLayout({
     const chats = await getChats()
 
     return (
-        <div className='flex h-[calc(100vh-4rem)]'>
+        <div className='flex h-full'>
             <div className='w-80 border-r flex flex-col bg-muted/10'>
                 <div className='p-4 border-b flex justify-between items-center bg-background'>
                     <h2 className='font-semibold text-lg'>Chats</h2>
